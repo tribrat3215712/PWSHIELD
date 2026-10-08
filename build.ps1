@@ -48,7 +48,7 @@ New-Item -ItemType Directory -Path $coreRuntimeClasses,$coreToolClasses,$coreTes
 $coreAsm = @('asm.jar','asm-tree.jar','asm-util.jar','asm-analysis.jar') | ForEach-Object { Join-Path $PSScriptRoot ('tools\' + $_) }
 foreach ($coreDependency in $coreAsm) { if (-not (Test-Path -LiteralPath $coreDependency)) { throw "Missing dependency $coreDependency (ASM 9.8)" } }
 $coreAsmCp = $coreAsm -join ';'
-$coreRuntimeSources = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src\pzshield') -Filter '*.java' | ForEach-Object FullName
+$coreRuntimeSources = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src\pwshield') -Filter '*.java' | ForEach-Object FullName
 & $coreJavac --release 25 -encoding UTF-8 -classpath $InputJar -d $coreRuntimeClasses @coreRuntimeSources
 if ($LASTEXITCODE -ne 0) { throw 'Runtime compilation failed' }
 & $coreJavac --release 25 -encoding UTF-8 -classpath $coreAsmCp -d $coreToolClasses (Join-Path $PSScriptRoot 'src\build\CorePatcher.java')
@@ -60,25 +60,25 @@ $coreTests = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'tests') -Filte
 & $coreJavac --release 25 -encoding UTF-8 -classpath $corePatchedJar -d $coreTestClasses @coreTests
 if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
 $coreTestCp = "$corePatchedJar;$coreTestClasses"
-$coreTestConfigArg = '-Dpzshield.config=' + (Join-Path $PSScriptRoot 'tests\test.properties')
-& $coreJava -Xverify:all $coreTestConfigArg -classpath $coreTestCp pzshield.CoreTests
+$coreTestConfigArg = '-Dpwshield.config=' + (Join-Path $PSScriptRoot 'tests\test.properties')
+& $coreJava -Xverify:all $coreTestConfigArg -classpath $coreTestCp pwshield.CoreTests
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
-& $coreJava -Xverify:all $coreTestConfigArg -classpath $coreTestCp pzshield.BatchLifecycleTests scheduler
+& $coreJava -Xverify:all $coreTestConfigArg -classpath $coreTestCp pwshield.BatchLifecycleTests scheduler
 if ($LASTEXITCODE -ne 0) { throw 'Batch recovery tests failed' }
 foreach ($coreLegacyFile in @('batch-queues-disabled.properties','batch-shield-disabled.properties')) {
-    $coreLegacyConfig = '-Dpzshield.config=' + (Join-Path $PSScriptRoot ('tests\' + $coreLegacyFile))
-    & $coreJava -Xverify:all $coreLegacyConfig -classpath $coreTestCp pzshield.BatchLifecycleTests legacy
+    $coreLegacyConfig = '-Dpwshield.config=' + (Join-Path $PSScriptRoot ('tests\' + $coreLegacyFile))
+    & $coreJava -Xverify:all $coreLegacyConfig -classpath $coreTestCp pwshield.BatchLifecycleTests legacy
     if ($LASTEXITCODE -ne 0) { throw 'Legacy batch cleanup tests failed' }
 }
-& $coreJava -Xverify:all -classpath $coreTestCp pzshield.ConfigAndMetricsTests (Join-Path $PSScriptRoot 'tests')
+& $coreJava -Xverify:all -classpath $coreTestCp pwshield.ConfigAndMetricsTests (Join-Path $PSScriptRoot 'tests')
 if ($LASTEXITCODE -ne 0) { throw 'Configuration and metrics tests failed' }
-& $coreJava --enable-native-access=ALL-UNNAMED -Xverify:all $coreTestConfigArg -classpath $coreTestCp pzshield.ProtocolIntegrationTests
+& $coreJava --enable-native-access=ALL-UNNAMED -Xverify:all $coreTestConfigArg -classpath $coreTestCp pwshield.ProtocolIntegrationTests
 if ($LASTEXITCODE -ne 0) { throw 'Wire protocol integration tests failed' }
-& $coreJava --sun-misc-unsafe-memory-access=allow -Xverify:all $coreTestConfigArg -classpath $coreTestCp pzshield.VehicleAuthorizationTests
+& $coreJava --sun-misc-unsafe-memory-access=allow -Xverify:all $coreTestConfigArg -classpath $coreTestCp pwshield.VehicleAuthorizationTests
 if ($LASTEXITCODE -ne 0) { throw 'Vehicle authorization integration tests failed' }
-& $coreJava -Xverify:all -classpath $coreTestCp pzshield.VerifyClasses
+& $coreJava -Xverify:all -classpath $coreTestCp pwshield.VerifyClasses
 if ($LASTEXITCODE -ne 0) { throw 'JVM bytecode verification failed' }
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'pzshield.properties') -Destination $coreDist
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'pwshield.properties') -Destination $coreDist
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'original\serialize.lua'),(Join-Path $PSScriptRoot 'original\stdlib.lua') -Destination $coreDist
 if (Test-Path -LiteralPath $corePublishedJar) {
     $corePublishedItem = Get-Item -LiteralPath $corePublishedJar -Force

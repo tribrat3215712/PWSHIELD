@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
@@ -23,7 +23,7 @@ import zombie.core.random.RandLua;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import zombie.core.physics.Transform;
-import pzshield.ShieldHooks;
+import pwshield.ShieldHooks;
 
 /** Real ownership and packet processing; Unsafe skips server/world/physics construction. */
 public final class VehicleAuthorizationTests {

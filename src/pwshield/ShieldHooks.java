@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,10 +35,10 @@ public final class ShieldHooks {
     private static FairQueue<IZomboidPacket> batchQueue;
 
     static {
-        System.err.println("[PZShield 1.1.1] compiled hooks loaded; enabled=" + ShieldConfig.ENABLED);
+        System.err.println("[PWSHIELD 1.1.2] compiled hooks loaded; enabled=" + ShieldConfig.ENABLED);
         if (ShieldConfig.ENABLED && ShieldConfig.METRICS) {
             var executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "PZShield-metrics"); thread.setDaemon(true); return thread;
+                Thread thread = new Thread(runnable, "PWSHIELD-metrics"); thread.setDaemon(true); return thread;
             });
             executor.scheduleWithFixedDelay(ShieldHooks::report, ShieldConfig.INTERVAL, ShieldConfig.INTERVAL, TimeUnit.SECONDS);
         }
@@ -109,17 +109,17 @@ public final class ShieldHooks {
         if (!ShieldConfig.ENABLED) return true;
         PacketTypes.PacketType type = PacketTypes.packetTypes.get(id);
         if (ShieldConfig.FIREWALL) {
-            if (type == null) { reject(connection, "pzshield-unknown-packet", INVALID); return false; }
+            if (type == null) { reject(connection, "pwshield-unknown-packet", INVALID); return false; }
             if ((type.handlingType & 1) == 0) { INVALID.increment(); return false; }
             if (ShieldConfig.VEHICLE && (type == PacketTypes.PacketType.VehiclePhysicsReliable ||
                     type == PacketTypes.PacketType.VehiclePhysicsUnreliable) &&
                     !PacketGuards.vehicle(reader.bb, TransmissionNumber.values().length)) {
-                reject(connection, "pzshield-invalid-vehicle-physics", INVALID); return false;
+                reject(connection, "pwshield-invalid-vehicle-physics", INVALID); return false;
             }
         }
         if (ShieldConfig.RATE_ENABLED && !LIMITER.allow(connection.getConnectedGUID(), reader.bb.remaining(), System.nanoTime())) {
             RATE.increment();
-            if (ShieldConfig.RATE_ENFORCE) { connection.forceDisconnect("pzshield-rate-limit"); return false; }
+            if (ShieldConfig.RATE_ENFORCE) { connection.forceDisconnect("pwshield-rate-limit"); return false; }
         }
         return true;
     }
@@ -136,7 +136,7 @@ public final class ShieldHooks {
     }
 
     private static boolean validVehicleState(VehiclePhysicsPacket packet, BaseVehicle vehicle) {
-        return packet instanceof VehicleStateView view && view.pzshieldValidState(vehicle.wheelInfo.length);
+        return packet instanceof VehicleStateView view && view.pwshieldValidState(vehicle.wheelInfo.length);
     }
 
     public static boolean vehicleState(int wheels, int capacity, float qx, float qy, float qz, float qw) {
@@ -160,7 +160,7 @@ public final class ShieldHooks {
         int capacity = payload <= 2048 ? 2048 : payload;
         if (!ShieldConfig.ENABLED) return capacity == 2048 ? ZomboidNetDataPool.instance.get() : ZomboidNetDataPool.instance.getLong(capacity);
         BacklogBudget.Reservation reservation = BUDGET.reserve(connection.getConnectedGUID(), capacity);
-        if (reservation == null) { reject(connection, "pzshield-backlog-limit", MEMORY); return null; }
+        if (reservation == null) { reject(connection, "pwshield-backlog-limit", MEMORY); return null; }
         try {
             ZomboidNetData data = capacity == 2048 ? ZomboidNetDataPool.instance.get() : ZomboidNetDataPool.instance.getLong(capacity);
             BUDGET.attach(data, reservation);
@@ -202,7 +202,7 @@ public final class ShieldHooks {
             String row = Instant.now() + "," + ACCEPTED.sum() + "," + BYTES.sum() + "," + INVALID.sum() + "," + PREAUTH.sum() +
                 "," + MEMORY.sum() + "," + RATE.sum() + "," + OWNER.sum() + "," + LIMITER.overflows + "," + BUDGET.bytes() + "," + BUDGET.peak() +
                 "," + DEFERRED[0].sum() + "," + DEFERRED[1].sum() + "," + DEFERRED[2].sum() + "," + lastCycleNs;
-            if (ShieldConfig.CONSOLE) System.err.println("[PZShield] accepted=" + ACCEPTED.sum() + " invalid=" + INVALID.sum() +
+            if (ShieldConfig.CONSOLE) System.err.println("[PWSHIELD] accepted=" + ACCEPTED.sum() + " invalid=" + INVALID.sum() +
                 " backlogBytes=" + BUDGET.bytes() + " memoryDisconnects=" + MEMORY.sum() + " rateWouldLimit=" + RATE.sum());
             if (!csvFailed) {
                 var path = ShieldConfig.CSV;
@@ -216,10 +216,10 @@ public final class ShieldHooks {
             }
         } catch (IOException exception) {
             csvFailed = true;
-            System.err.println("[PZShield] CSV unavailable: " + exception.getClass().getSimpleName());
+            System.err.println("[PWSHIELD] CSV unavailable: " + exception.getClass().getSimpleName());
         } catch (RuntimeException exception) {
             // Keep the daemon alive even if a filesystem/security policy changes while the server runs.
-            System.err.println("[PZShield] metrics error: " + exception.getClass().getSimpleName());
+            System.err.println("[PWSHIELD] metrics error: " + exception.getClass().getSimpleName());
         }
     }
 }

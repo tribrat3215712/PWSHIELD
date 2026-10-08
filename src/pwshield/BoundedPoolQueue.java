@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;

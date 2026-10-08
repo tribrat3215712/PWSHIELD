@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.nio.ByteBuffer;
 import org.joml.Quaternionf;
@@ -6,7 +6,7 @@ import zombie.core.network.ByteBufferReader;
 import zombie.core.network.ByteBufferWriter;
 import zombie.core.physics.Transform;
 import zombie.vehicles.TransmissionNumber;
-import pzshield.PacketGuards;
+import pwshield.PacketGuards;
 
 /** Independent wire checks using original 42.21 Reader/Writer and JOML. No RakNet/Bullet/server startup. */
 public final class ProtocolIntegrationTests {

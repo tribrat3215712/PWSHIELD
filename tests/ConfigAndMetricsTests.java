@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
@@ -38,7 +38,7 @@ public final class ConfigAndMetricsTests {
         runChild(configs.resolve("config-invalid-packet-pair.properties"), "invalid", "each rate and burst");
         runChild(configs.resolve("config-invalid-byte-pair.properties"), "invalid", "each rate and burst");
 
-        Path temporary = Files.createTempDirectory("pzshield-metrics-test-");
+        Path temporary = Files.createTempDirectory("pwshield-metrics-test-");
         Path config = temporary.resolve("metrics.properties"), csv = temporary.resolve("performance.csv");
         try {
             Properties properties = new Properties();
@@ -64,7 +64,7 @@ public final class ConfigAndMetricsTests {
         var command = new java.util.ArrayList<String>();
         command.add(Path.of(System.getProperty("java.home"), "bin", "java.exe").toString());
         command.add("-Xverify:all");
-        command.add("-Dpzshield.config=" + config);
+        command.add("-Dpwshield.config=" + config);
         command.add("-classpath");
         command.add(System.getProperty("java.class.path"));
         command.add(ConfigAndMetricsTests.class.getName());
@@ -123,7 +123,7 @@ public final class ConfigAndMetricsTests {
 
     private static void invalid(String expectedMessage) {
         try {
-            Class.forName("pzshield.ShieldConfig", true, ConfigAndMetricsTests.class.getClassLoader());
+            Class.forName("pwshield.ShieldConfig", true, ConfigAndMetricsTests.class.getClassLoader());
             throw new AssertionError("Invalid configuration initialized successfully");
         } catch (ExceptionInInitializerError failure) {
             Throwable cause = failure.getCause();

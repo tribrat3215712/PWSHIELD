@@ -1,6 +1,6 @@
-package pzshield;
+package pwshield;
 
 /** Implemented by the audited VehiclePhysicsPacket via the offline patcher. */
 public interface VehicleStateView {
-    boolean pzshieldValidState(int wheelCapacity);
+    boolean pwshieldValidState(int wheelCapacity);
 }

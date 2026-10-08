@@ -23,7 +23,7 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public final class CorePatcher implements Opcodes {
     private static final String INPUT_SHA = "e1a69eb743ede60b213a0fe7f8b83d4fcab773036d256cc4543a336f3b058a33";
-    private static final String GAME = "zombie/network/GameServer", HOOK = "pzshield/ShieldHooks";
+    private static final String GAME = "zombie/network/GameServer", HOOK = "pwshield/ShieldHooks";
     private static final String QUEUE = "java/util/concurrent/ConcurrentLinkedQueue";
     private static final String[] FIELDS = {"MainLoopNetDataHighPriorityQ", "MainLoopPlayerUpdateQ", "MainLoopNetDataQ"};
     private static final String QDESC = "Ljava/util/concurrent/ConcurrentLinkedQueue;";
@@ -39,7 +39,7 @@ public final class CorePatcher implements Opcodes {
         require(INPUT_SHA.equals(hash), "Input JAR does not match the audited artifact; refusing to patch");
         require(!input.toRealPath().equals(output.toAbsolutePath().normalize()) &&
             (!Files.exists(output) || !Files.isSameFile(input, output)), "Never overwrite input JAR");
-        Path staged = Files.createTempFile(output.toAbsolutePath().getParent(), ".pzshield-build-", ".jar.tmp");
+        Path staged = Files.createTempFile(output.toAbsolutePath().getParent(), ".pwshield-build-", ".jar.tmp");
         Map<String, byte[]> replacements = new LinkedHashMap<>();
         loader = new URLClassLoader(new java.net.URL[]{runtime.toUri().toURL(), input.toUri().toURL()}, CorePatcher.class.getClassLoader());
         try (JarFile jar = new JarFile(input.toFile())) {
@@ -52,7 +52,7 @@ public final class CorePatcher implements Opcodes {
                 CheckClassAdapter.verify(new ClassReader(entry.getValue()), loader, false, new PrintWriter(errors));
                 require(errors.toString().isBlank(), "Bytecode verification failed: " + entry.getKey() + "\n" + errors);
             }
-            try (var paths = Files.walk(runtime.resolve("pzshield"))) {
+            try (var paths = Files.walk(runtime.resolve("pwshield"))) {
                 for (Path path : paths.filter(p -> p.toString().endsWith(".class")).sorted().toList())
                     replacements.put(runtime.relativize(path).toString().replace('\\', '/'), Files.readAllBytes(path));
             }
@@ -129,9 +129,9 @@ public final class CorePatcher implements Opcodes {
                 require(start instanceof VarInsnNode && start.getOpcode() == ILOAD, "Unknown vehicle budget check");
                 LabelNode originalCheck = new LabelNode();
                 InsnList gate = new InsnList();
-                gate.add(new FieldInsnNode(GETSTATIC, "pzshield/ShieldConfig", "ENABLED", "Z"));
+                gate.add(new FieldInsnNode(GETSTATIC, "pwshield/ShieldConfig", "ENABLED", "Z"));
                 gate.add(new JumpInsnNode(IFEQ, originalCheck));
-                gate.add(new FieldInsnNode(GETSTATIC, "pzshield/ShieldConfig", "QUEUES", "Z"));
+                gate.add(new FieldInsnNode(GETSTATIC, "pwshield/ShieldConfig", "QUEUES", "Z"));
                 gate.add(new JumpInsnNode(IFEQ, originalCheck));
                 gate.add(new JumpInsnNode(GOTO, jump.label));
                 gate.add(originalCheck);
@@ -149,7 +149,7 @@ public final class CorePatcher implements Opcodes {
                 TypeInsnNode allocation = (TypeInsnNode) previousCode(duplicate);
                 require(constructor.owner.equals(QUEUE) && constructor.name.equals("<init>") && duplicate.getOpcode() == DUP &&
                     allocation.getOpcode() == NEW && allocation.desc.equals(QUEUE), "Unknown queue initialization");
-                allocation.desc = "pzshield/FairQueue";
+                allocation.desc = "pwshield/FairQueue";
                 constructor.owner = allocation.desc; constructor.desc = "(I)V";
                 int phase = java.util.Arrays.asList(FIELDS).indexOf(field.name);
                 init.instructions.insertBefore(constructor, new InsnNode(ICONST_0 + phase));
@@ -181,9 +181,9 @@ public final class CorePatcher implements Opcodes {
 
     private static byte[] patchVehicle(byte[] original) {
         ClassNode node = node(original);
-        require(node.methods.stream().noneMatch(m -> m.name.equals("pzshieldValidState")), "Vehicle state hook already exists");
-        node.interfaces.add("pzshield/VehicleStateView");
-        MethodNode state = new MethodNode(ACC_PUBLIC, "pzshieldValidState", "(I)Z", null, null);
+        require(node.methods.stream().noneMatch(m -> m.name.equals("pwshieldValidState")), "Vehicle state hook already exists");
+        node.interfaces.add("pwshield/VehicleStateView");
+        MethodNode state = new MethodNode(ACC_PUBLIC, "pwshieldValidState", "(I)Z", null, null);
         state.instructions.add(new VarInsnNode(ALOAD, 0));
         state.instructions.add(new FieldInsnNode(GETFIELD, VEHICLE, "wheelsCount", "S"));
         state.instructions.add(new VarInsnNode(ILOAD, 1));
@@ -273,7 +273,7 @@ public final class CorePatcher implements Opcodes {
             if (insn instanceof TypeInsnNode allocation && allocation.getOpcode() == NEW && allocation.desc.equals(QUEUE)) {
                 MethodInsnNode constructor = (MethodInsnNode) nextCode(nextCode(allocation));
                 require(constructor.name.equals("<init>") && constructor.owner.equals(QUEUE), "Unknown pool constructor");
-                allocation.desc = "pzshield/BoundedPoolQueue"; constructor.owner = allocation.desc; ++pools;
+                allocation.desc = "pwshield/BoundedPoolQueue"; constructor.owner = allocation.desc; ++pools;
             }
         require(pools == 1, "Expected one pooled-buffer queue");
         return write(node);

@@ -1,4 +1,4 @@
-package pzshield;
+package pwshield;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,23 +27,23 @@ public final class ShieldConfig {
     public static final boolean METRICS = bool("performance.enabled", true);
     public static final boolean CONSOLE = bool("logging.console", true);
     public static final int INTERVAL = (int) number("performance.intervalSeconds", 5, 1, 3600);
-    public static final Path CSV = Path.of(VALUES.getProperty("performance.csvPath", "logs/pzshield-performance.csv"));
+    public static final Path CSV = Path.of(VALUES.getProperty("performance.csvPath", "logs/pwshield-performance.csv"));
 
     static {
         if ((PPS == 0) != (PACKET_BURST == 0) || (BPS == 0) != (BYTE_BURST == 0))
-            throw new IllegalArgumentException("PZShield: each rate and burst must both be zero or both positive");
+            throw new IllegalArgumentException("PWSHIELD: each rate and burst must both be zero or both positive");
     }
 
     private static Properties load() {
         Properties properties = new Properties();
-        String explicit = System.getProperty("pzshield.config");
-        Path path = Path.of(explicit == null ? "pzshield.properties" : explicit);
+        String explicit = System.getProperty("pwshield.config");
+        Path path = Path.of(explicit == null ? "pwshield.properties" : explicit);
         if (explicit == null && !Files.exists(path)) {
             try {
                 Path code = Path.of(ShieldConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-                path = (Files.isDirectory(code) ? code : code.getParent()).resolve("pzshield.properties");
+                path = (Files.isDirectory(code) ? code : code.getParent()).resolve("pwshield.properties");
             } catch (Exception exception) {
-                throw new IllegalStateException("PZShield: cannot resolve configuration path", exception);
+                throw new IllegalStateException("PWSHIELD: cannot resolve configuration path", exception);
             }
         }
         if (Files.exists(path)) {
@@ -51,10 +51,10 @@ public final class ShieldConfig {
                 // Explicit UTF-8 preserves Russian comments and paths.
                 properties.load(new java.io.InputStreamReader(input, java.nio.charset.StandardCharsets.UTF_8));
             } catch (IOException exception) {
-                throw new IllegalStateException("PZShield: cannot read " + path, exception);
+                throw new IllegalStateException("PWSHIELD: cannot read " + path, exception);
             }
         } else if (explicit != null) {
-            throw new IllegalArgumentException("PZShield: missing explicit configuration " + path);
+            throw new IllegalArgumentException("PWSHIELD: missing explicit configuration " + path);
         }
         return properties;
     }
@@ -62,19 +62,19 @@ public final class ShieldConfig {
     static boolean bool(String key, boolean fallback) {
         String value = VALUES.getProperty(key, Boolean.toString(fallback)).trim();
         if (!value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false"))
-            throw new IllegalArgumentException("PZShield: invalid boolean " + key);
+            throw new IllegalArgumentException("PWSHIELD: invalid boolean " + key);
         return Boolean.parseBoolean(value);
     }
 
     static long number(String key, long fallback, long min, long max) {
         long value = Long.parseLong(VALUES.getProperty(key, Long.toString(fallback)).trim());
-        if (value < min || value > max) throw new IllegalArgumentException("PZShield: out of range " + key);
+        if (value < min || value > max) throw new IllegalArgumentException("PWSHIELD: out of range " + key);
         return value;
     }
 
     static double decimal(String key, double fallback) {
         double value = Double.parseDouble(VALUES.getProperty(key, Double.toString(fallback)).trim());
-        if (!Double.isFinite(value) || value < 0) throw new IllegalArgumentException("PZShield: invalid rate " + key);
+        if (!Double.isFinite(value) || value < 0) throw new IllegalArgumentException("PWSHIELD: invalid rate " + key);
         return value;
     }
 }
